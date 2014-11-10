@@ -34,6 +34,8 @@ import com.amazonaws.services.kinesis.model.ListStreamsRequest;
 import com.amazonaws.services.kinesis.model.ListStreamsResult;
 import com.amazonaws.services.kinesis.model.PutRecordRequest;
 import com.amazonaws.services.kinesis.model.PutRecordResult;
+import com.amazonaws.regions.Region;
+import com.amazonaws.regions.Regions;
 
 public class Sample {
 	static AmazonKinesisClient kinesisClient;
@@ -48,17 +50,14 @@ public class Sample {
 		 */
 		AWSCredentials credentials = null;
 		try {
-			credentials = new ProfileCredentialsProvider("default")
-					.getCredentials();
+			credentials = new ProfileCredentialsProvider("default").getCredentials();
 		} catch (Exception e) {
-			throw new AmazonClientException(
-					"Cannot load the credentials from the credential profiles file. ",
-					e);
+			throw new AmazonClientException("Cannot load the credentials from the credential profiles file. ",e);
 		}
 
 		kinesisClient = new AmazonKinesisClient(credentials);
-                Region region = Region.getRegion(Regions.US_WEST_2);
-                kiensisClient.setRegion(region);
+		Region region = Region.getRegion(Regions.US_WEST_2);
+		kinesisClient.setRegion(region);
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -107,7 +106,7 @@ public class Sample {
 
 		LOG.info("Putting records in stream : " + myStreamName);
 		// Write 10 records to the stream
-		for (int j = 0; j < 1000; j++) {
+		for (int j = 0; j < 100; j++) {
 			PutRecordRequest putRecordRequest = new PutRecordRequest();
 			putRecordRequest.setStreamName(myStreamName);
 			putRecordRequest.setData(ByteBuffer.wrap(String.format(
@@ -133,7 +132,8 @@ public class Sample {
 
 	private static void waitForStreamToBecomeAvailable(String myStreamName) {
 
-		System.out.println("Waiting for " + myStreamName + " to become ACTIVE...");
+		System.out.println("Waiting for " + myStreamName
+				+ " to become ACTIVE...");
 
 		long startTime = System.currentTimeMillis();
 		long endTime = startTime + (10 * 60 * 1000);
@@ -149,20 +149,23 @@ public class Sample {
 				// ask for no more than 10 shards at a time -- this is an
 				// optional parameter
 				describeStreamRequest.setLimit(10);
-				DescribeStreamResult describeStreamResponse = kinesisClient.describeStream(describeStreamRequest);
+				DescribeStreamResult describeStreamResponse = kinesisClient
+						.describeStream(describeStreamRequest);
 
-				String streamStatus = describeStreamResponse.getStreamDescription().getStreamStatus();
+				String streamStatus = describeStreamResponse
+						.getStreamDescription().getStreamStatus();
 				System.out.println("  - current state: " + streamStatus);
 				if (streamStatus.equals("ACTIVE")) {
 					return;
 				}
 			} catch (AmazonServiceException ase) {
-				if (ase.getErrorCode().equalsIgnoreCase("ResourceNotFoundException") == false) {
+				if (ase.getErrorCode().equalsIgnoreCase(
+						"ResourceNotFoundException") == false) {
 					throw ase;
 				}
-				throw new RuntimeException("Stream " + myStreamName + " never went active");
+				throw new RuntimeException("Stream " + myStreamName
+						+ " never went active");
 			}
 		}
 	}
 }
-
